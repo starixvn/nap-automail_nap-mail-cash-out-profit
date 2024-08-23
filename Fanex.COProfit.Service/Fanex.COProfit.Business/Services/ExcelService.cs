@@ -99,7 +99,7 @@ namespace Fanex.COProfit.Business.Services
             excelPackage.Workbook.Worksheets.Delete("Template");
             var date = DateTime.Now;
             var name = $"{fileName}";
-            var path = $@"{AppConfigService.Config.Path}/{date:yyyy}/{date:MM}";
+            var path = $@"{AppConfigService.Config.Path}/{date:yyyyMMdd}";
             if (!Directory.Exists(path))
             {
                 Directory.CreateDirectory(path);
