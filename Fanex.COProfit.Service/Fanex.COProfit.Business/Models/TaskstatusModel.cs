@@ -1,7 +1,6 @@
-﻿namespace Fanex.COProfit.Business.Models
+﻿namespace Fanex.COProfit.Business.Models;
+
+public class TaskStatusModel
 {
-    public class TaskstatusModel
-    {
-        public bool DataIsReady { get; set; }
-    }
+    public bool DataIsReady { get; set; }
 }

@@ -1,37 +1,33 @@
 ﻿using System;
 
-namespace Fanex.COProfit.Business.Services
+namespace Fanex.COProfit.Business.Services;
+
+public class DateServiceMonthly : DateService
 {
-    public class DateServiceMonthly : DateService
+    public DateTime StartDate
     {
-        public DateTime StartDate
+        get
         {
-            get
-            {
-                var date = DateTime.Now.AddDays(-1);
-                if (date.Day == 31 && date.Month == 12)
-                {
-                    return Convert.ToDateTime($"{date:yyyy-MM-01}");
-                }
-
-                return Convert.ToDateTime($"{date.AddMonths(-1):yyyy-MM-01}");
-            }
+            var date = DateTime.Now.AddDays(-1);
+            return Convert.ToDateTime(date is { Day: 31, Month: 12 } 
+                ? $"{date:yyyy-MM-01}" 
+                : $"{date.AddMonths(-1):yyyy-MM-01}");
         }
+    }
 
-        public DateTime EndDate
+    public DateTime EndDate
+    {
+        get
         {
-            get
+            var date = DateTime.Now.AddDays(-1);
+            if (date is { Day: 31, Month: 12 })
             {
-                var date = DateTime.Now.AddDays(-1);
-                if (date.Day == 31 && date.Month == 12)
-                {
-                    return Convert.ToDateTime($"{date:yyyy-MM-dd}");
-                }
-
-                date = Convert.ToDateTime($"{date:yyyy-MM-dd}");
-                var numOfDays = date.Day;
-                return date.AddDays(-numOfDays);
+                return Convert.ToDateTime($"{date:yyyy-MM-dd}");
             }
+
+            date = Convert.ToDateTime($"{date:yyyy-MM-dd}");
+            var numOfDays = date.Day;
+            return date.AddDays(-numOfDays);
         }
     }
 }

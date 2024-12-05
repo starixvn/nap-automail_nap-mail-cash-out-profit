@@ -2,23 +2,15 @@
 using Fanex.COProfit.Business.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Fanex.COProfit.Service.Controllers
+namespace Fanex.COProfit.Service.Controllers;
+
+[ApiController]
+[Route("[controller]")]
+public class ExecuteController(MainService service) : ControllerBase
 {
-    [ApiController]
-    [Route("[controller]")]
-    public class ExecuteController : ControllerBase
+    [HttpGet]
+    public JobMessage Get()
     {
-        private readonly MainService service;
-
-        public ExecuteController(MainService service)
-        {
-            this.service = service;
-        }
-
-        [HttpGet]
-        public JobMessage Get()
-        {
-            return service.Execute();
-        }
+        return service.Execute();
     }
 }

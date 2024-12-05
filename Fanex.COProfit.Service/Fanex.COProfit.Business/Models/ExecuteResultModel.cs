@@ -1,13 +1,12 @@
 ﻿using Fanex.MailDelivery.Core.Models;
 
-namespace Fanex.COProfit.Business.Models
+namespace Fanex.COProfit.Business.Models;
+
+public class ExecuteResultModel
 {
-    public class ExecuteResultModel
-    {
-        public bool Success { get; set; }
+    public bool Success { get; set; }
 
-        public string Message { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
 
-        public Mail Mail { get; set; } = new Mail();
-    }
+    public Mail Mail { get; set; } = new();
 }

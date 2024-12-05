@@ -1,11 +1,10 @@
 ﻿using Fanex.COProfit.Business.Models;
 
-namespace Fanex.COProfit.Business.Services
-{
-    public static class AppConfigService
-    {
-        public static ConfigSettingModel Config { get; set; }
+namespace Fanex.COProfit.Business.Services;
 
-        public static bool IsProcessing { get; set; }
-    }
+public static class AppConfigService
+{
+    public static ConfigSettingModel Config { get; set; }
+
+    public static bool IsProcessing { get; set; }
 }

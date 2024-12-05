@@ -1,23 +1,16 @@
-﻿namespace Fanex.COProfit.Business.Models
+﻿namespace Fanex.COProfit.Business.Models;
+
+public class SummaryDTO
 {
-    public class SummaryDTO
-    {
-        public string CurrencyCode { get; set; }
+    public string CurrencyCode { get; set; }
 
-        public int BetCount { get; set; }
+    public int BetCount { get; set; }
 
-        public decimal COTurnover { get; set; }
+    public decimal COTurnover { get; set; }
 
-        public decimal AssumedPayout { get; set; }
+    public decimal AssumedPayout { get; set; }
 
-        public decimal BBAmount { get; set; }
+    public decimal BBAmount { get; set; }
 
-        public decimal COProfit
-        {
-            get
-            {
-                return AssumedPayout - BBAmount;
-            }
-        }
-    }
+    public decimal COProfit => AssumedPayout - BBAmount;
 }

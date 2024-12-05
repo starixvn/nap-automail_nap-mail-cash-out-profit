@@ -1,4 +1,5 @@
-FROM hub.nexdev.net/base/dotnet/core/sdk:5.0.102-ca-patch-buster-slim AS builder
+FROM hub.nexdev.net/base/dotnet/core/sdk:8.0-alpine AS builder
+
 WORKDIR /src
 
 COPY ./Fanex.COProfit.Service/Fanex.COProfit.Business ./Fanex.COProfit.Business
@@ -13,7 +14,7 @@ COPY ./Fanex.COProfit.Service/Fanex.COProfit.Service .
 
 RUN dotnet publish -r linux-x64 --self-contained false -c Release -o /app
 
-FROM hub.nexdev.net/base/dotnet/core/aspnet:5.0-nap-mail-core
+FROM hub.nexdev.net/base/dotnet/core/aspnet:8.0-nap-mail-core
 
 
 # Don’t run as root
