@@ -6,11 +6,9 @@ namespace Fanex.COProfit.Service.Controllers;
 [Route("[controller]")]
 public class Controller : ControllerBase
 {
-    private const string OK = "OK";
-
     [HttpGet]
     public string Index()
     {
-        return OK;
+        return "OK";
     }
 }
