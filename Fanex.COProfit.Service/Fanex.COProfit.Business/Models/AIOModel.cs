@@ -1,40 +1,33 @@
 ﻿using System;
 
-namespace Fanex.COProfit.Business.Models
+namespace Fanex.COProfit.Business.Models;
+
+public class AIOModel
 {
-    public class AIOModel
+    public DateTime Date { get; set; }
+
+    public string ReportDate => $"{Date:dd-MMM-yyyy}";
+
+    public string League { get; set; }
+
+    public string Bettype { get; set; }
+
+    public string Status { get; set; }
+
+    public decimal RealTurnover { get; set; }
+
+    public decimal RealIncome { get; set; }
+
+    public decimal Margin
     {
-        public DateTime Date { get; set; }
-
-        public string ReportDate
+        get
         {
-            get
+            if (RealTurnover == 0)
             {
-                return $"{Date:dd-MMM-yyyy}";
+                return 0;
             }
-        }
 
-        public string League { get; set; }
-
-        public string Bettype { get; set; }
-
-        public string Status { get; set; }
-
-        public decimal RealTurnover { get; set; }
-
-        public decimal RealIncome { get; set; }
-
-        public decimal Margin
-        {
-            get
-            {
-                if (RealTurnover == 0)
-                {
-                    return 0;
-                }
-
-                return RealIncome / RealTurnover;
-            }
+            return RealIncome / RealTurnover;
         }
     }
 }

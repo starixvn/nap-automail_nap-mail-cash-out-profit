@@ -1,11 +1,10 @@
 ﻿using System;
 
-namespace Fanex.COProfit.Business.Services
-{
-    public interface DateService
-    {
-        DateTime StartDate { get; }
+namespace Fanex.COProfit.Business.Services;
 
-        DateTime EndDate { get; }
-    }
+public interface DateService
+{
+    DateTime StartDate { get; }
+
+    DateTime EndDate { get; }
 }

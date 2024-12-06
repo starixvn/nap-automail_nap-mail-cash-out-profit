@@ -1,26 +1,34 @@
-﻿using Fanex.MailDelivery.Client.Jobs;
-using Fanex.MailDelivery.Core.Models;
+﻿namespace Fanex.COProfit.Service.Services;
+
+using System.Diagnostics;
+using System.Runtime;
+using System.Text;
+using System;
 using Fanex.COProfit.Business.Services;
+using MailDelivery.Client.Jobs;
+using MailDelivery.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
+using Olympus.Diagnostic;
 using Quartz;
 
-namespace Fanex.COProfit.Service
+public class ExecuteService : JobBase
 {
-    public class ExecuteService : JobBase
+    protected override JobMessage Run(Schedule schedule, IJobExecutionContext jobContext)
     {
-        protected override JobMessage Run(Schedule schedule, IJobExecutionContext jobContext)
-        {
-            var services = ServiceCollectionExtensions.Services;
-            var serviceProvider = services.BuildServiceProvider();
+        var services = ServiceCollectionExtensions.Services;
+        var serviceProvider = services.BuildServiceProvider();
 
-            var mainService = serviceProvider.GetService<MainService>();
-            var result = mainService.Execute();
-            return new JobMessage
-            {
-                JobStatus = result.JobStatus,
-                Schedule = schedule,
-                Mail = result.Mail
-            };
-        }
+        var mainService = serviceProvider.GetService<MainService>();
+        var result = mainService.Execute();
+
+        var gc = GarbageCollector.CollectExtremely();
+        Console.WriteLine(gc);
+
+        return new JobMessage
+        {
+            JobStatus = result.JobStatus,
+            Schedule = schedule,
+            Mail = result.Mail
+        };
     }
 }

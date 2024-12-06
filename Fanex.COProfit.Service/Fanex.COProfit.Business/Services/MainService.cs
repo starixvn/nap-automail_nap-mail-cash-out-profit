@@ -2,71 +2,56 @@
 using Fanex.COProfit.Business.Models;
 using System;
 
-namespace Fanex.COProfit.Business.Services
+namespace Fanex.COProfit.Business.Services;
+
+public interface MainService
 {
-    public interface MainService
+    JobMessage Execute();
+}
+
+public class MainServiceImp(
+    Log log,
+    MailService mailService,
+    ExcelService excelService)
+    : MainService
+{
+    public JobMessage Execute()
     {
-        JobMessage Execute();
-    }
-
-    public class MainServiceImp : MainService
-    {
-        private readonly Log log;
-        private readonly MailService mailService;
-        private readonly DataService dataService;
-        private readonly ExcelService excelService;
-
-        public MainServiceImp(
-            Log log,
-            MailService mailService,
-            DataService dataService,
-            ExcelService excelService)
-
+        var result = new ExecuteResultModel();
+        var jobMessage = new JobMessage();
+        try
         {
-            this.log = log;
-            this.mailService = mailService;
-            this.dataService = dataService;
-            this.excelService = excelService;
+            result = SendNotification();
         }
-
-        public JobMessage Execute()
+        catch (Exception e)
         {
-            var result = new ExecuteResultModel();
-            JobMessage jobMessage = new JobMessage();
-            try
-            {
-                result = SendNotification();
-            }
-            catch (Exception e)
-            {
-                result.Success = false;
-                result.Message = e.Message;
-                log.Log(e);
-            }
-            finally
-            {
-                jobMessage.Mail = result.Mail;
-                jobMessage.JobStatus = result.Success ? JobStatus.Success : JobStatus.DataIsNotReady;
-                jobMessage.TaskLog = new TaskLog
-                {
-                    LogTime = DateTime.Now,
-                    Message = result.Message
-                };
-            }
-
-            return jobMessage;
+            result.Success = false;
+            result.Message = e.Message;
+            log.Log(e);
         }
-
-        private ExecuteResultModel SendNotification()
+        finally
         {
-            var excelFile = excelService.Export();
-            var mail = mailService.CreateMail(excelFile);
-            return new ExecuteResultModel
+            jobMessage.Mail = result.Mail;
+            jobMessage.JobStatus = result.Success ? JobStatus.Success : JobStatus.DataIsNotReady;
+            jobMessage.TaskLog = new TaskLog
             {
-                Mail = mail,
-                Success = true,
-                Message = string.Empty
+                LogTime = DateTime.Now,
+                Message = result.Message
             };
         }
+
+        return jobMessage;
+    }
+
+    private ExecuteResultModel SendNotification()
+    {
+        var excelFile = excelService.Export();
+        var mail = mailService.CreateMail(excelFile);
+        return new ExecuteResultModel
+        {
+            Mail = mail,
+            Success = true,
+            Message = string.Empty
+        };
     }
 }

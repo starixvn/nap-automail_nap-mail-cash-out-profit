@@ -1,38 +1,34 @@
-using Fanex.COProfit.Business.Models;
-using Fanex.COProfit.Business.Services;
-using Fanex.COProfitByTO.Service;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
-using Newtonsoft.Json;
-using System;
-using System.IO;
+using Microsoft.AspNetCore.Builder;
+using Fanex.COProfit.Service;
+using Fanex.Data.SqlServer;
+using Fanex.Logging.Sentry.RavenClient;
+using Microsoft.Extensions.DependencyInjection;
+using Fanex.COProfit.Service.Utilities;
+using Fanex.MailDelivery.Client;
 
-namespace Fanex.COProfit.Service
-{
-    public static class Program
-    {
-        public static void Main(string[] args)
-        {
-            CreateHostBuilder(args).Build().Run();
-        }
+var builder = WebApplication.CreateBuilder(args);
 
-        public static IHostBuilder CreateHostBuilder(string[] args)
-        {
-            Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
-            LoadConfiguration();
+var services = builder.Services;
+var configuration = builder.Configuration;
 
-            return Host.CreateDefaultBuilder(args)
-                   .ConfigureWebHostDefaults(webBuilder =>
-                   {
-                       webBuilder.UseUrls($"http://0.0.0.0:5000");
-                       webBuilder.UseStartup<Startup>();
-                   });
-        }
+services.AddConfiguration();
+services.AddFanexLogSentry(configuration);
+services.AddFanexSql(configuration);
+services.AddInternalServices();
 
-        private static void LoadConfiguration()
-        {
-            var text = File.ReadAllText("appsettings.json");
-            AppConfigService.Config = JsonConvert.DeserializeObject<ConfigSettingModel>(text);
-        }
-    }
-}
+services.AddControllers();
+services.AddEndpointsApiExplorer();
+services.AddSwaggerGen();
+
+var app = builder.Build();
+app.UseSwagger();
+app.UseSwaggerUI();
+
+app.UseMiddleware<ExceptionLoggerMiddleware>();
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+await MailClientHandler.StartAsync();
+
+await app.RunAsync();

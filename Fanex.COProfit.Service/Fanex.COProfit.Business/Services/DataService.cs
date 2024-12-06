@@ -1,46 +1,39 @@
-﻿using Fanex.COProfit.Business.Criterias;
-using Fanex.COProfit.Business.Models;
+﻿using Fanex.COProfit.Business.Models;
 using Fanex.Data.Repository;
 using System;
 using System.Collections.Generic;
 
-namespace Fanex.COProfit.Business.Services
+namespace Fanex.COProfit.Business.Services;
+
+using Criteria;
+
+public interface DataService
 {
-    public interface DataService
+    Tuple<
+        IEnumerable<SummaryModel>,
+        IEnumerable<DetailModel>
+    > QueryData();
+}
+
+public class DataServiceImp(
+    IDynamicRepository repository,
+    DateServiceProvider dateService)
+    : DataService
+{
+    public Tuple<
+        IEnumerable<SummaryModel>,
+        IEnumerable<DetailModel>
+    > QueryData()
     {
-        Tuple<
-            IEnumerable<SummaryModel>,
-            IEnumerable<DetailModel>
-            > QueryData();
-    }
-
-    public class DataServiceImp : DataService
-    {
-        private readonly IDynamicRepository repository;
-        private readonly DateServiceProfiver dateService;
-
-        public DataServiceImp(
-            IDynamicRepository repository,
-            DateServiceProfiver dateService)
+        var date = dateService.DateService();
+        var criteria = new COProfitCriteria
         {
-            this.repository = repository;
-            this.dateService = dateService;
-        }
+            StartDate = date.StartDate,
+            EndDate = date.EndDate
+        };
 
-        public Tuple<
-            IEnumerable<SummaryModel>,
-            IEnumerable<DetailModel>
-            > QueryData()
-        {
-            var date = dateService.DateService();
-            var criteria = new COProfitCriteria
-            {
-                StartDate = date.StartDate,
-                EndDate = date.EndDate,
-            };
-
-            var data = repository.FetchMultiple<SummaryModel, DetailModel>(criteria);
-            return data;
-        }
+        var data = repository.FetchMultiple<SummaryModel, DetailModel>(criteria);
+            
+        return new Tuple<IEnumerable<SummaryModel>, IEnumerable<DetailModel>>(data.FirstResultSet, data.SecondResultSet);
     }
 }
