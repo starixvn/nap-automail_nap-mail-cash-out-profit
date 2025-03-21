@@ -2,7 +2,7 @@ ARG CI_REGISTRY_IMAGE
 FROM $CI_REGISTRY_IMAGE:builder as deps
 RUN mkdir -p /src/packages
 
-FROM hub.nexdev.net/base/dotnet/core/sdk:8.0-alpine AS builder
+FROM hub.nexdev.net/base/dotnet/core/sdk:9.0-alpine AS builder
 
 ENV NUGET_PACKAGES=/src/packages
 COPY --from=deps $NUGET_PACKAGES/. $NUGET_PACKAGES/
@@ -15,13 +15,13 @@ COPY ./Fanex.COProfit.Service/Fanex.COProfit.Service/Fanex.COProfit.Service.cspr
 
 WORKDIR /src/Fanex.COProfit.Service
 RUN dotnet nuget add source https://nuget.nexdev.net/api/v2
-RUN dotnet restore -v n -r linux-x64  Fanex.COProfit.Service.csproj
+RUN dotnet restore -v n -r linux-x64
 
 COPY ./Fanex.COProfit.Service/Fanex.COProfit.Service .
 
 RUN dotnet publish -r linux-x64 --self-contained false -o /app
 
-FROM hub.nexdev.net/base/dotnet/core/aspnet:8.0-nap-mail-core
+FROM hub.nexdev.net/base/dotnet/core/aspnet:9.0-nap-mail-core
 
 
 # Don’t run as root
