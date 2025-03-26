@@ -12,7 +12,7 @@ public interface DataService
     Tuple<
         IEnumerable<SummaryModel>,
         IEnumerable<DetailModel>
-    > QueryData();
+    > QueryData(int sportType);
 }
 
 public class DataServiceImp(
@@ -23,17 +23,18 @@ public class DataServiceImp(
     public Tuple<
         IEnumerable<SummaryModel>,
         IEnumerable<DetailModel>
-    > QueryData()
+    > QueryData(int sportType)
     {
         var date = dateService.DateService();
         var criteria = new COProfitCriteria
         {
             StartDate = date.StartDate,
-            EndDate = date.EndDate
+            EndDate = date.EndDate,
+            SportType = sportType
         };
 
         var data = repository.FetchMultiple<SummaryModel, DetailModel>(criteria);
-            
+
         return new Tuple<IEnumerable<SummaryModel>, IEnumerable<DetailModel>>(data.FirstResultSet, data.SecondResultSet);
     }
 }

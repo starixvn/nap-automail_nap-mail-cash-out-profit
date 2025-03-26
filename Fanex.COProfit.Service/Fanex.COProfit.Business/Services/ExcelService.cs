@@ -21,25 +21,55 @@ public class ExcelServiceImp(
     public string Export()
     {
         using var excelPackage = new ExcelPackage(new FileInfo("Templates/Template.xlsx"));
-        using var sheetMain = excelPackage.Workbook.Worksheets["Report"];
-        using var sheetDetail = excelPackage.Workbook.Worksheets["Detail"];
+        var date = dateServiceProvider.DateService().EndDate;
+        using var sheetMainTpl = excelPackage.Workbook.Worksheets["Summary"];
+        using var sheetDetailTpl = excelPackage.Workbook.Worksheets["Detail"];
         using var sheetTpl = excelPackage.Workbook.Worksheets["Template"];
 
-        var (dataSummary, dataDetail) = dataService.QueryData();
-        var dataResult = refineDataService.Execute(dataSummary, dataDetail);
+        var sports = new Dictionary<int, string>
+        {
+            { 1, "Soccer" },
+            { 2, "Basketball" }
+        };
+        foreach (var sport in sports)
+        {
+            var sheetMain = excelPackage.Workbook.Worksheets.Add($"{sport.Value} Summary");
+            var sheetDetail = excelPackage.Workbook.Worksheets.Add($"{sport.Value} Detail");
+            sheetMainTpl.Cells["A1:F10"].Copy(sheetMain.Cells["A1:F10"]);
+            sheetDetailTpl.Cells["A1:G3"].Copy(sheetDetail.Cells["A1:G3"]);
 
-        RenderMainSheet(sheetTpl, sheetMain, dataResult.Item1.ToList());
-        RenderDetailSheet(sheetDetail, dataResult.Item2.ToList());
+            sheetMain.View.FreezePanes(10, 1);
+            sheetMain.View.ShowGridLines = false;
+            sheetMain.Row(9).Height = sheetMainTpl.Row(9).Height;
+            for (var col = 1; col <= 6; col++)
+            {
+                sheetMain.Column(col).Width = sheetMainTpl.Column(col).Width;
+            }
 
-        var date = dateServiceProvider.DateService().EndDate;
-        var fileName = $"Monthly_Basketball_Cash_Out_Profit_Report_For_{date:MMM_yyyy}.xlsx";
+            sheetDetail.View.FreezePanes(3, 1);
+            sheetDetail.View.ShowGridLines = false;
+            sheetDetail.Row(2).Height = sheetDetailTpl.Row(2).Height;
+            for (var col = 1; col <= 7; col++)
+            {
+                sheetDetail.Column(col).Width = sheetDetailTpl.Column(col).Width;
+            }
+
+            var (dataSummary, dataDetail) = dataService.QueryData(sport.Key);
+            var dataResult = refineDataService.Execute(dataSummary, dataDetail);
+
+            RenderMainSheet(sheetTpl, sheetMain, dataResult.Item1.ToList(), sport.Value);
+            RenderDetailSheet(sheetDetail, dataResult.Item2.ToList());
+
+        }
+
+        var fileName = $"Monthly_JackTime_Cash_Out_Profit_Report_For_{date:MMM_yyyy}.xlsx";
         return SaveExcelFile(excelPackage, fileName);
     }
 
-    private void RenderMainSheet(ExcelWorksheet sheetTpl, ExcelWorksheet sheetMain, List<SummaryDTO> data)
+    private void RenderMainSheet(ExcelWorksheet sheetTpl, ExcelWorksheet sheetMain, List<SummaryDTO> data, string sportName)
     {
         var date = dateServiceProvider.DateService();
-        sheetMain.Cells["A2"].Value = $"Monthly Basketball Cash Out Profit Report For {date.EndDate:MMMM yyyy}";
+        sheetMain.Cells["A2"].Value = $"Monthly {sportName} Cash Out Profit Report For {date.EndDate:MMMM yyyy}";
         sheetMain.Cells["A3"].Value = $"Generated on {DateTime.Now}";
 
         sheetMain.Cells["A10"].LoadFromCollection(data, false);
@@ -85,6 +115,8 @@ public class ExcelServiceImp(
     private static string SaveExcelFile(ExcelPackage excelPackage, string fileName)
     {
         excelPackage.Workbook.Worksheets.Delete("Template");
+        excelPackage.Workbook.Worksheets.Delete("Summary");
+        excelPackage.Workbook.Worksheets.Delete("Detail");
         var date = DateTime.Now;
         var name = $"{fileName}";
         var path = $"{AppConfigService.Config.Path}/{date:yyyyMMdd}";
