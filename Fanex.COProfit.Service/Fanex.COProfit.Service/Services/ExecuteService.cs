@@ -1,15 +1,11 @@
 ﻿namespace Fanex.COProfit.Service.Services;
-
-using System.Diagnostics;
-using System.Runtime;
-using System.Text;
-using System;
 using Fanex.COProfit.Business.Services;
 using MailDelivery.Client.Jobs;
 using MailDelivery.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Olympus.Diagnostic;
 using Quartz;
+using System;
 
 public class ExecuteService : JobBase
 {

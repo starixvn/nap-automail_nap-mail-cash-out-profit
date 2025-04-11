@@ -27,7 +27,7 @@ public class MailServiceImp : MailService
         var mail = new Mail
         {
             Title = "Auto Generated Report Administrator",
-            Subject = $"Automail Report - Monthly Basketball Cash Out Profit Report - {DateTime.Today:yyyy/MM/dd}",
+            Subject = $"Automail Report - Monthly Jack Time Cash Out Profit Report - {DateTime.Today:yyyy/MM/dd}",
             Body = LoadBody(shortName),
             Attachments = attachments
         };
