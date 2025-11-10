@@ -1,7 +1,7 @@
-﻿using Fanex.COProfit.Business.Models;
-using Fanex.Data.Repository;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using Fanex.COProfit.Business.Models;
+using Fanex.Data.Repository;
 
 namespace Fanex.COProfit.Business.Services;
 
@@ -13,6 +13,11 @@ public interface DataService
         IEnumerable<SummaryModel>,
         IEnumerable<DetailModel>
     > QueryData(int sportType);
+
+    Tuple<
+        IEnumerable<BetBuilderSummaryModel>,
+        IEnumerable<BetBuilderDetailModel>
+    > QueryBetBuilderData();
 }
 
 public class DataServiceImp(
@@ -26,7 +31,7 @@ public class DataServiceImp(
     > QueryData(int sportType)
     {
         var date = dateService.DateService();
-        var criteria = new COProfitCriteria
+        var criteria = new CoProfitCriteria
         {
             StartDate = date.StartDate,
             EndDate = date.EndDate,
@@ -35,6 +40,23 @@ public class DataServiceImp(
 
         var data = repository.FetchMultiple<SummaryModel, DetailModel>(criteria);
 
-        return new Tuple<IEnumerable<SummaryModel>, IEnumerable<DetailModel>>(data.FirstResultSet, data.SecondResultSet);
+        return new Tuple<IEnumerable<SummaryModel>, IEnumerable<DetailModel>>(data.FirstResultSet,
+            data.SecondResultSet);
+    }
+
+    public Tuple<
+        IEnumerable<BetBuilderSummaryModel>,
+        IEnumerable<BetBuilderDetailModel>> QueryBetBuilderData()
+    {
+        var date = dateService.DateService();
+        var criteria = new BetBuilderProfitCriteria
+        {
+            StartDate = date.StartDate,
+            EndDate = date.EndDate
+        };
+
+        var data = repository.FetchMultiple<BetBuilderSummaryModel, BetBuilderDetailModel>(criteria);
+        return new Tuple<IEnumerable<BetBuilderSummaryModel>, IEnumerable<BetBuilderDetailModel>>(data.FirstResultSet,
+            data.SecondResultSet);
     }
 }

@@ -21,7 +21,7 @@ public class ExcelServiceImp(
     private static readonly Dictionary<int, string> Sports = new()
     {
         { 2, "Basketball" },
-        { 1, "Soccer" },
+        { 1, "Soccer" }
     };
 
     public string Export()
@@ -33,6 +33,8 @@ public class ExcelServiceImp(
         {
             ProcessSportData(excelPackage, templates, sport);
         }
+
+        ProcessBetBuilderData(excelPackage, templates, "Bet Builder");
 
         return SaveExcelFile(excelPackage, GenerateFileName());
     }
@@ -64,6 +66,20 @@ public class ExcelServiceImp(
 
         RenderMainSheet(templates.Template, sheetMain, dataResult.Item1.ToList(), sport.Value);
         RenderDetailSheet(sheetDetail, dataResult.Item2.ToList());
+    }
+
+    private void ProcessBetBuilderData(ExcelPackage excelPackage,
+        (ExcelWorksheet Summary, ExcelWorksheet Detail, ExcelWorksheet Template) templates,
+        string sport)
+    {
+        var (sheetMain, sheetDetail) = CreateSportSheets(excelPackage, templates, sport);
+        ConfigureSheetFormats(sheetMain, templates.Summary, sheetDetail, templates.Detail);
+
+        var (dataSummary, dataDetail) = dataService.QueryBetBuilderData();
+        var dataResult = refineDataService.ExecuteBetBuilder(dataSummary, dataDetail);
+
+        RenderMainBetBuilderSheet(templates.Template, sheetMain, dataResult.Item1.ToList(), sport);
+        RenderDetailBetBuilderSheet(sheetDetail, dataResult.Item2.ToList());
     }
 
     private static (ExcelWorksheet Main, ExcelWorksheet Detail) CreateSportSheets(
@@ -117,7 +133,7 @@ public class ExcelServiceImp(
     private string GenerateFileName()
     {
         var date = dateServiceProvider.DateService().EndDate;
-        return $"Monthly_JackTime_Cash_Out_Profit_Report_For_{date:MMM_yyyy}.xlsx";
+        return $"Monthly_JackTime_Profit_Report_For_{date:MMM_yyyy}.xlsx";
     }
 
     private void RenderMainSheet(ExcelWorksheet sheetTpl, ExcelWorksheet sheetMain, List<SummaryDTO> data,
@@ -150,6 +166,54 @@ public class ExcelServiceImp(
     }
 
     private static void RenderDetailSheet(ExcelWorksheet sheetDetail, List<DetailDTO> data)
+    {
+        sheetDetail.Cells["A3"].LoadFromCollection(data, false);
+        const int startRow = 3;
+        var endRow = data.Count + startRow - 1;
+        const int startCol = 1;
+        const int endCol = 7;
+        const double height = 19.5d;
+        for (var col = startCol; col <= endCol; col++)
+        {
+            for (var row = startRow; row <= endRow; row++)
+            {
+                sheetDetail.Cells[row, col].StyleID = sheetDetail.Cells[startRow, col].StyleID;
+                sheetDetail.Row(row).Height = height;
+            }
+        }
+    }
+
+    private void RenderMainBetBuilderSheet(ExcelWorksheet sheetTpl, ExcelWorksheet sheetMain,
+        List<BetBuilderSummaryDTO> data,
+        string sportName)
+    {
+        var date = dateServiceProvider.DateService();
+        sheetMain.Cells["A2"].Value = $"Monthly {sportName} Cash Out Profit Report For {date.EndDate:MMMM yyyy}";
+        sheetMain.Cells["A3"].Value = $"Generated on {DateTime.Now}";
+
+        sheetMain.Cells["A10"].LoadFromCollection(data, false);
+        const int startRow = 10;
+        var endRow = data.Count + startRow - 1;
+        const int startCol = 1;
+        const int endCol = 6;
+        const int tplRow = 2;
+        const double height = 19.5d;
+        for (var col = startCol; col <= endCol; col++)
+        {
+            for (var row = startRow; row <= endRow; row++)
+            {
+                sheetMain.Cells[row, col].StyleID = sheetMain.Cells[startRow, col].StyleID;
+                if (row == endRow)
+                {
+                    sheetMain.Cells[row, col].StyleID = sheetTpl.Cells[tplRow, col].StyleID;
+                }
+
+                sheetMain.Row(row).Height = height;
+            }
+        }
+    }
+
+    private static void RenderDetailBetBuilderSheet(ExcelWorksheet sheetDetail, List<BetBuilderDetailDTO> data)
     {
         sheetDetail.Cells["A3"].LoadFromCollection(data, false);
         const int startRow = 3;

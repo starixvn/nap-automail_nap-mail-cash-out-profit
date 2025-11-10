@@ -3,7 +3,7 @@
 using Data.Repository;
 using System;
 
-public class COProfitCriteria : CriteriaBase
+public class CoProfitCriteria : CriteriaBase
 {
     public DateTime StartDate { get; set; }
 
