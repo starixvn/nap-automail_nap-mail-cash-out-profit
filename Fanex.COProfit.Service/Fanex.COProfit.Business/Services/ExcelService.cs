@@ -1,9 +1,9 @@
-﻿using Fanex.COProfit.Business.Models;
-using OfficeOpenXml;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Fanex.COProfit.Business.Models;
+using OfficeOpenXml;
 
 namespace Fanex.COProfit.Business.Services;
 
@@ -34,7 +34,10 @@ public class ExcelServiceImp(
             ProcessSportData(excelPackage, templates, sport);
         }
 
-        ProcessBetBuilderData(excelPackage, templates, "Bet Builder");
+        var templateBetBuilder = LoadTemplates(excelPackage, "-BetBuilder");
+        ProcessBetBuilderData(excelPackage, templateBetBuilder, "Bet Builder");
+        DeleteTemplateSheet(excelPackage);
+        DeleteTemplateSheet(excelPackage, "-BetBuilder");
 
         return SaveExcelFile(excelPackage, GenerateFileName());
     }
@@ -45,12 +48,12 @@ public class ExcelServiceImp(
     }
 
     private static (ExcelWorksheet Summary, ExcelWorksheet Detail, ExcelWorksheet Template) LoadTemplates(
-        ExcelPackage excelPackage)
+        ExcelPackage excelPackage, string sport = "")
     {
         return (
-            excelPackage.Workbook.Worksheets["Summary"],
-            excelPackage.Workbook.Worksheets["Detail"],
-            excelPackage.Workbook.Worksheets["Template"]
+            excelPackage.Workbook.Worksheets[$"Summary{sport}"],
+            excelPackage.Workbook.Worksheets[$"Detail{sport}"],
+            excelPackage.Workbook.Worksheets[$"Template{sport}"]
         );
     }
 
@@ -65,7 +68,7 @@ public class ExcelServiceImp(
         var dataResult = refineDataService.Execute(dataSummary, dataDetail);
 
         RenderMainSheet(templates.Template, sheetMain, dataResult.Item1.ToList(), sport.Value);
-        RenderDetailSheet(sheetDetail, dataResult.Item2.ToList());
+        RenderDetailSheet(sheetDetail, dataResult.Item2.ToList(), sport.Value);
     }
 
     private void ProcessBetBuilderData(ExcelPackage excelPackage,
@@ -79,7 +82,7 @@ public class ExcelServiceImp(
         var dataResult = refineDataService.ExecuteBetBuilder(dataSummary, dataDetail);
 
         RenderMainBetBuilderSheet(templates.Template, sheetMain, dataResult.Item1.ToList(), sport);
-        RenderDetailBetBuilderSheet(sheetDetail, dataResult.Item2.ToList());
+        RenderDetailBetBuilderSheet(sheetDetail, dataResult.Item2.ToList(), sport);
     }
 
     private static (ExcelWorksheet Main, ExcelWorksheet Detail) CreateSportSheets(
@@ -139,63 +142,31 @@ public class ExcelServiceImp(
     private void RenderMainSheet(ExcelWorksheet sheetTpl, ExcelWorksheet sheetMain, List<SummaryDTO> data,
         string sportName)
     {
-        var date = dateServiceProvider.DateService();
-        sheetMain.Cells["A2"].Value = $"Monthly {sportName} Cash Out Profit Report For {date.EndDate:MMMM yyyy}";
-        sheetMain.Cells["A3"].Value = $"Generated on {DateTime.Now}";
-
-        sheetMain.Cells["A10"].LoadFromCollection(data, false);
-        const int startRow = 10;
-        var endRow = data.Count + startRow - 1;
-        const int startCol = 1;
-        const int endCol = 6;
-        const int tplRow = 2;
-        const double height = 19.5d;
-        for (var col = startCol; col <= endCol; col++)
-        {
-            for (var row = startRow; row <= endRow; row++)
-            {
-                sheetMain.Cells[row, col].StyleID = sheetMain.Cells[startRow, col].StyleID;
-                if (row == endRow)
-                {
-                    sheetMain.Cells[row, col].StyleID = sheetTpl.Cells[tplRow, col].StyleID;
-                }
-
-                sheetMain.Row(row).Height = height;
-            }
-        }
-    }
-
-    private static void RenderDetailSheet(ExcelWorksheet sheetDetail, List<DetailDTO> data)
-    {
-        sheetDetail.Cells["A3"].LoadFromCollection(data, false);
-        const int startRow = 3;
-        var endRow = data.Count + startRow - 1;
-        const int startCol = 1;
-        const int endCol = 7;
-        const double height = 19.5d;
-        for (var col = startCol; col <= endCol; col++)
-        {
-            for (var row = startRow; row <= endRow; row++)
-            {
-                sheetDetail.Cells[row, col].StyleID = sheetDetail.Cells[startRow, col].StyleID;
-                sheetDetail.Row(row).Height = height;
-            }
-        }
+        RenderMainSheetInternal(sheetTpl, sheetMain, data, sportName);
     }
 
     private void RenderMainBetBuilderSheet(ExcelWorksheet sheetTpl, ExcelWorksheet sheetMain,
         List<BetBuilderSummaryDTO> data,
         string sportName)
     {
+        RenderMainSheetInternal(sheetTpl, sheetMain, data, sportName);
+    }
+
+    private void RenderMainSheetInternal<T>(ExcelWorksheet sheetTpl, ExcelWorksheet sheetMain, List<T> data,
+        string sportName)
+    {
         var date = dateServiceProvider.DateService();
-        sheetMain.Cells["A2"].Value = $"Monthly {sportName} Cash Out Profit Report For {date.EndDate:MMMM yyyy}";
+        var header = sportName.Equals("Bet Builder")
+            ? $"Monthly Bet Builder+ Profit Report For {date.EndDate:MMMM yyyy}"
+            : $"Monthly {sportName} Cash Out Profit Report For {date.EndDate:MMMM yyyy}";
+        sheetMain.Cells["A2"].Value = header;
         sheetMain.Cells["A3"].Value = $"Generated on {DateTime.Now}";
 
         sheetMain.Cells["A10"].LoadFromCollection(data, false);
         const int startRow = 10;
         var endRow = data.Count + startRow - 1;
         const int startCol = 1;
-        const int endCol = 6;
+        var endCol = sportName.Equals("Bet Builder") ? 5 : 6;
         const int tplRow = 2;
         const double height = 19.5d;
         for (var col = startCol; col <= endCol; col++)
@@ -213,13 +184,24 @@ public class ExcelServiceImp(
         }
     }
 
-    private static void RenderDetailBetBuilderSheet(ExcelWorksheet sheetDetail, List<BetBuilderDetailDTO> data)
+    private static void RenderDetailSheet(ExcelWorksheet sheetDetail, List<DetailDTO> data, string sport)
+    {
+        RenderDetailSheetInternal(sheetDetail, data, sport);
+    }
+
+    private static void RenderDetailBetBuilderSheet(ExcelWorksheet sheetDetail, List<BetBuilderDetailDTO> data,
+        string sport)
+    {
+        RenderDetailSheetInternal(sheetDetail, data, sport);
+    }
+
+    private static void RenderDetailSheetInternal<T>(ExcelWorksheet sheetDetail, List<T> data, string sport)
     {
         sheetDetail.Cells["A3"].LoadFromCollection(data, false);
         const int startRow = 3;
         var endRow = data.Count + startRow - 1;
         const int startCol = 1;
-        const int endCol = 7;
+        var endCol = sport.Equals("Bet Builder") ? 6 : 7;
         const double height = 19.5d;
         for (var col = startCol; col <= endCol; col++)
         {
@@ -233,9 +215,6 @@ public class ExcelServiceImp(
 
     private static string SaveExcelFile(ExcelPackage excelPackage, string fileName)
     {
-        excelPackage.Workbook.Worksheets.Delete("Template");
-        excelPackage.Workbook.Worksheets.Delete("Summary");
-        excelPackage.Workbook.Worksheets.Delete("Detail");
         var date = DateTime.Now;
         var name = $"{fileName}";
         var path = $"{AppConfigService.Config.Path}/{date:yyyyMMdd}";
@@ -248,5 +227,12 @@ public class ExcelServiceImp(
         excelPackage.SaveAs(new FileInfo(path), AppConfigService.Config.Password);
 
         return path;
+    }
+
+    private static void DeleteTemplateSheet(ExcelPackage excelPackage, string sport = "")
+    {
+        excelPackage.Workbook.Worksheets.Delete($"Template{sport}");
+        excelPackage.Workbook.Worksheets.Delete($"Summary{sport}");
+        excelPackage.Workbook.Worksheets.Delete($"Detail{sport}");
     }
 }

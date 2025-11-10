@@ -38,10 +38,7 @@ public class DataServiceImp(
             SportType = sportType
         };
 
-        var data = repository.FetchMultiple<SummaryModel, DetailModel>(criteria);
-
-        return new Tuple<IEnumerable<SummaryModel>, IEnumerable<DetailModel>>(data.FirstResultSet,
-            data.SecondResultSet);
+        return QueryDataInternal<SummaryModel, DetailModel>(criteria);
     }
 
     public Tuple<
@@ -55,8 +52,12 @@ public class DataServiceImp(
             EndDate = date.EndDate
         };
 
-        var data = repository.FetchMultiple<BetBuilderSummaryModel, BetBuilderDetailModel>(criteria);
-        return new Tuple<IEnumerable<BetBuilderSummaryModel>, IEnumerable<BetBuilderDetailModel>>(data.FirstResultSet,
-            data.SecondResultSet);
+        return QueryDataInternal<BetBuilderSummaryModel, BetBuilderDetailModel>(criteria);
+    }
+
+    private Tuple<IEnumerable<T1>, IEnumerable<T2>> QueryDataInternal<T1, T2>(CriteriaBase criteria)
+    {
+        var data = repository.FetchMultiple<T1, T2>(criteria);
+        return new Tuple<IEnumerable<T1>, IEnumerable<T2>>(data.FirstResultSet, data.SecondResultSet);
     }
 }

@@ -39,9 +39,7 @@ public class RefineDataServiceImp : RefineDataService
     {
         var result = summary.Select(summaryModel => new SummaryDTO
         {
-            CurrencyCode = summaryModel.MultipliedBy > 1
-                    ? $"{summaryModel.MultipliedBy}_{summaryModel.CurrencyCode}"
-                    : summaryModel.CurrencyCode,
+            CurrencyCode = FormatCurrencyCode(summaryModel.MultipliedBy, summaryModel.CurrencyCode),
             BetCount = summaryModel.BetCount,
             COTurnover = summaryModel.COTurnover,
             AssumedPayout = summaryModel.AssumedPayout,
@@ -49,18 +47,15 @@ public class RefineDataServiceImp : RefineDataService
         })
             .ToList();
 
-        var orderResult = result.OrderBy(s => s.CurrencyCode).ToList();
-        var total = new SummaryDTO
-        {
-            CurrencyCode = "Grand Total",
-            BetCount = orderResult.Sum(s => s.BetCount),
-            COTurnover = orderResult.Sum(s => s.COTurnover),
-            AssumedPayout = orderResult.Sum(s => s.AssumedPayout),
-            BBAmount = orderResult.Sum(s => s.BBAmount)
-        };
-
-        orderResult.Add(total);
-        return orderResult;
+        return AddGrandTotalAndOrder(result, 
+            orderResult => new SummaryDTO
+            {
+                CurrencyCode = "Grand Total",
+                BetCount = orderResult.Sum(s => s.BetCount),
+                COTurnover = orderResult.Sum(s => s.COTurnover),
+                AssumedPayout = orderResult.Sum(s => s.AssumedPayout),
+                BBAmount = orderResult.Sum(s => s.BBAmount)
+            });
     }
 
     private static IEnumerable<DetailDTO> ProcessDetailData(IEnumerable<DetailModel> detail)
@@ -68,9 +63,7 @@ public class RefineDataServiceImp : RefineDataService
         var result = detail.Select(detailModel => new DetailDTO
         {
             CashOutDate = detailModel.CashOutDate,
-            CurrencyCode = detailModel.MultipliedBy > 1
-                    ? $"{detailModel.MultipliedBy}_{detailModel.CurrencyCode}"
-                    : detailModel.CurrencyCode,
+            CurrencyCode = FormatCurrencyCode(detailModel.MultipliedBy, detailModel.CurrencyCode),
             BetCount = detailModel.BetCount,
             COTurnover = detailModel.COTurnover,
             AssumedPayout = detailModel.AssumedPayout,
@@ -86,9 +79,7 @@ public class RefineDataServiceImp : RefineDataService
     {
         var result = summary.Select(summaryModel => new BetBuilderSummaryDTO
         {
-            CurrencyCode = summaryModel.MultipliedBy > 1
-                    ? $"{summaryModel.MultipliedBy}_{summaryModel.CurrencyCode}"
-                    : summaryModel.CurrencyCode,
+            CurrencyCode = FormatCurrencyCode(summaryModel.MultipliedBy, summaryModel.CurrencyCode),
             BetCount = summaryModel.BetCount,
             MemberTurnover = summaryModel.MemberTurnover,
             MemberWinloss = summaryModel.MemberWinloss,
@@ -96,18 +87,15 @@ public class RefineDataServiceImp : RefineDataService
         })
             .ToList();
 
-        var orderResult = result.OrderBy(s => s.CurrencyCode).ToList();
-        var total = new BetBuilderSummaryDTO
-        {
-            CurrencyCode = "Grand Total",
-            BetCount = orderResult.Sum(s => s.BetCount),
-            MemberTurnover = orderResult.Sum(s => s.MemberTurnover),
-            MemberWinloss = orderResult.Sum(s => s.MemberWinloss),
-            JtProfit = orderResult.Sum(s => s.JtProfit)
-        };
-
-        orderResult.Add(total);
-        return orderResult;
+        return AddGrandTotalAndOrder(result,
+            orderResult => new BetBuilderSummaryDTO
+            {
+                CurrencyCode = "Grand Total",
+                BetCount = orderResult.Sum(s => s.BetCount),
+                MemberTurnover = orderResult.Sum(s => s.MemberTurnover),
+                MemberWinloss = orderResult.Sum(s => s.MemberWinloss),
+                JtProfit = orderResult.Sum(s => s.JtProfit)
+            });
     }
 
     private static IEnumerable<BetBuilderDetailDTO> ProcessDetailBetBuilderData(
@@ -116,9 +104,7 @@ public class RefineDataServiceImp : RefineDataService
         var result = detail.Select(detailModel => new BetBuilderDetailDTO
         {
             RptDate = detailModel.RptDate,
-            CurrencyCode = detailModel.MultipliedBy > 1
-                    ? $"{detailModel.MultipliedBy}_{detailModel.CurrencyCode}"
-                    : detailModel.CurrencyCode,
+            CurrencyCode = FormatCurrencyCode(detailModel.MultipliedBy, detailModel.CurrencyCode),
             BetCount = detailModel.BetCount,
             MemberTurnover = detailModel.MemberTurnover,
             MemberWinloss = detailModel.MemberWinloss,
@@ -127,5 +113,18 @@ public class RefineDataServiceImp : RefineDataService
             .ToList();
 
         return result.OrderBy(s => s.CurrencyCode).ThenBy(s => s.RptDate);
+    }
+
+    private static string FormatCurrencyCode(int multipliedBy, string currencyCode)
+    {
+        return multipliedBy > 1 ? $"{multipliedBy}_{currencyCode}" : currencyCode;
+    }
+
+    private static IEnumerable<T> AddGrandTotalAndOrder<T>(List<T> result, Func<List<T>, T> createTotal)
+    {
+        var orderResult = result.OrderBy(s => ((dynamic)s).CurrencyCode).ToList();
+        var total = createTotal(orderResult);
+        orderResult.Add(total);
+        return orderResult;
     }
 }
