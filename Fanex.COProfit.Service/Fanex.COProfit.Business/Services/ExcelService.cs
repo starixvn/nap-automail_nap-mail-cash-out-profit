@@ -35,7 +35,7 @@ public class ExcelServiceImp(
         }
 
         var templateBetBuilder = LoadTemplates(excelPackage, "-BetBuilder");
-        ProcessBetBuilderData(excelPackage, templateBetBuilder, "Bet Builder");
+        ProcessBetBuilderData(excelPackage, templateBetBuilder, "Bet Builder+");
         DeleteTemplateSheet(excelPackage);
         DeleteTemplateSheet(excelPackage, "-BetBuilder");
 
@@ -156,7 +156,7 @@ public class ExcelServiceImp(
         string sportName)
     {
         var date = dateServiceProvider.DateService();
-        var header = sportName.Equals("Bet Builder")
+        var header = sportName.Equals("Bet Builder+")
             ? $"Monthly Bet Builder+ Profit Report For {date.EndDate:MMMM yyyy}"
             : $"Monthly {sportName} Cash Out Profit Report For {date.EndDate:MMMM yyyy}";
         sheetMain.Cells["A2"].Value = header;
@@ -166,7 +166,7 @@ public class ExcelServiceImp(
         const int startRow = 10;
         var endRow = data.Count + startRow - 1;
         const int startCol = 1;
-        var endCol = sportName.Equals("Bet Builder") ? 5 : 6;
+        var endCol = sportName.Equals("Bet Builder+") ? 5 : 6;
         const int tplRow = 2;
         const double height = 19.5d;
         for (var col = startCol; col <= endCol; col++)
@@ -201,7 +201,7 @@ public class ExcelServiceImp(
         const int startRow = 3;
         var endRow = data.Count + startRow - 1;
         const int startCol = 1;
-        var endCol = sport.Equals("Bet Builder") ? 6 : 7;
+        var endCol = sport.Equals("Bet Builder+") ? 6 : 7;
         const double height = 19.5d;
         for (var col = startCol; col <= endCol; col++)
         {
